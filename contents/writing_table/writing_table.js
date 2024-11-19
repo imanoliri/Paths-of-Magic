@@ -1,61 +1,61 @@
 const wordCounts = {
-    "magnus": 216,
+    "magnus": 210,
     "water": 66,
-    "magic": 62,
-    "rock": 29,
+    "magic": 60,
+    "rock": 28,
     "land": 27,
-    "other": 21,
-    "time": 20,
-    "essence": 20,
+    "other": 22,
+    "time": 19,
     "tower": 19,
     "powerful": 19,
+    "essence": 19,
     "king": 19,
     "knew": 19,
     "path": 18,
-    "mage": 17,
+    "mage": 18,
     "how": 16,
     "world": 15,
-    "way": 15,
     "realized": 15,
-    "seemed": 15,
     "journey": 14,
-    "eye": 14,
+    "way": 13,
     "too": 13,
     "saw": 13,
-    "power": 12,
+    "power": 13,
+    "seemed": 13,
+    "eye": 13,
     "life": 11,
-    "day": 11,
-    "grew": 11,
     "book": 11,
-    "far": 10,
     "chapter": 10,
+    "day": 10,
     "long": 10,
-    "place": 9,
+    "grew": 10,
     "wasnt": 9,
     "distance": 9,
-    "magical": 9,
+    "continue": 9,
     "see": 9,
-    "continue": 8,
+    "far": 8,
+    "magical": 8,
     "learned": 8,
     "control": 8,
     "understood": 8,
     "small": 7,
-    "felt": 7,
+    "came": 7,
     "became": 7,
-    "however": 7,
     "village": 6,
     "different": 6,
-    "came": 6,
     "decided": 6,
-    "element": 6,
     "merchant": 6,
+    "however": 6,
     "clear": 5,
     "sea": 5,
     "thought": 5,
+    "felt": 5,
     "manipulate": 5,
     "slightly": 5,
     "left": 5,
     "returned": 5,
+    "understand": 5,
+    "element": 5,
     "trap": 5,
     "view": 5,
     "always": 5
@@ -73,6 +73,16 @@ function cleanWord(word) {
     }, word).toLowerCase();
 }
 
+
+let speakLettersWhenDropped = true;
+let speakWhenCorrectSolution = true;
+document.getElementById("checkSpeakLettersWhenDropped").checked = speakLettersWhenDropped;
+document.getElementById("checkSpeakWordsWhenCorrect").checked = speakWhenCorrectSolution;
+
+function refreshChecboxes() {
+    speakLettersWhenDropped = document.getElementById("checkSpeakLettersWhenDropped").checked;
+    speakWhenCorrectSolution = document.getElementById("checkSpeakWordsWhenCorrect").checked;
+}
 
 
 numberOfColumns = 7
@@ -95,6 +105,9 @@ function drag(ev) {
 function drop(ev) {
     ev.preventDefault();
     var data = ev.dataTransfer.getData("text");
+    if (speakLettersWhenDropped) {
+        speak(data)
+    }
 
     if (data === "") {
         ev.target.innerHTML = ""; // Clear the content
@@ -251,6 +264,10 @@ function checkMatch(input) {
     // Check if the constructed word matches the input value
     if (constructedWord === input.value) {
         input.style.backgroundColor = "lightgreen"; // Light up the input if it matches
+        if (speakWhenCorrectSolution) {
+            speak(constructedWord)
+        }
+
     } else {
         input.style.backgroundColor = ""; // Remove background color if it doesn't match
     }
@@ -267,8 +284,12 @@ function fillTextBoxes() {
 
     // Fill the text boxes with the selected words
     shuffledWords.forEach((word, index) => {
-        textInputs[index].value = word;
+        textInputs[index].value = word.toUpperCase();
     });
+}
+function speak(text, lang = 'english') {
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
 }
 
 
