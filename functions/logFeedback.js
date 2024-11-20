@@ -1,7 +1,5 @@
 const admin = require('firebase-admin');
 
-console.log('Private Key:', process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'));
-
 
 // Initialize Firebase Admin SDK using environment variables
 admin.initializeApp({
