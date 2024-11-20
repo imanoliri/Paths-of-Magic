@@ -1,4 +1,8 @@
 .venv
 *.pyc
+.vscode
 
 The_Paths_of_Magic_v2.zip
+
+# Local Netlify folder
+.netlify

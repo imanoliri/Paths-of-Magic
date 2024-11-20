@@ -1,67 +1,96 @@
-const wordCounts = {
-    "magnus": 210,
-    "water": 66,
-    "magic": 60,
-    "rock": 28,
-    "land": 27,
-    "other": 22,
-    "time": 19,
-    "tower": 19,
-    "powerful": 19,
-    "essence": 19,
-    "king": 19,
-    "knew": 19,
-    "path": 18,
-    "mage": 18,
-    "how": 16,
-    "world": 15,
-    "realized": 15,
-    "journey": 14,
-    "way": 13,
-    "too": 13,
-    "saw": 13,
-    "power": 13,
-    "seemed": 13,
-    "eye": 13,
-    "life": 11,
-    "book": 11,
-    "chapter": 10,
-    "day": 10,
-    "long": 10,
-    "grew": 10,
-    "wasnt": 9,
-    "distance": 9,
-    "continue": 9,
-    "see": 9,
-    "far": 8,
-    "magical": 8,
-    "learned": 8,
-    "control": 8,
-    "understood": 8,
-    "small": 7,
-    "came": 7,
-    "became": 7,
-    "village": 6,
-    "different": 6,
-    "decided": 6,
-    "merchant": 6,
-    "however": 6,
-    "clear": 5,
-    "sea": 5,
-    "thought": 5,
-    "felt": 5,
-    "manipulate": 5,
-    "slightly": 5,
-    "left": 5,
-    "returned": 5,
-    "understand": 5,
-    "element": 5,
-    "trap": 5,
-    "view": 5,
-    "always": 5
-};
+async function fetchwWordCount() {
+    try {
+        const response = await fetch('./../../interactive_book_word_count.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        wordCount = await response.json();
+        console.log("Word counts fetched:", wordCount);
+
+    } catch (error) {
+        console.error("Error fetching word counts:", error);
+    }
+}
 
 const charsToIgnore = [" ", ",", "-", "—", ";", ".", "'", "`", "´"];
+let numberOfColumns
+let wordCount
+let words
+let speakLettersWhenDropped = true;
+let speakWhenCorrectSolution = true;
+let currentElement
+let selectedLetter = null;
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchwWordCount().then(createTable);
+});
+
+
+
+function createTable() {
+    document.getElementById("checkSpeakLettersWhenDropped").checked = speakLettersWhenDropped;
+    document.getElementById("checkSpeakWordsWhenCorrect").checked = speakWhenCorrectSolution;
+    document.getElementById("checkSpeakLettersWhenDropped").addEventListener('change', (event) => {
+        speakLettersWhenDropped = event.target.checked;
+    });
+    
+    document.getElementById("checkSpeakWordsWhenCorrect").addEventListener('change', (event) => {
+        speakWhenCorrectSolution = event.target.checked;
+    });
+
+
+    numberOfColumns = 7
+    words = Object.keys(wordCount);
+    words = getWordsForGrid(Object.keys(wordCount).map(cleanWord), numberOfColumns);
+    document.documentElement.style.setProperty('--number-of-columns', numberOfColumns);
+
+    addListenersAndRender()
+
+}
+
+function addListenersAndRender() {
+
+
+    // DRAG AND DROP + CLICK AND CLICK
+
+    // Letters
+    const letterElements = document.querySelectorAll(".letter");
+    letterElements.forEach(letter => {
+        letter.addEventListener("dragstart", drag); // Add click event to letters
+        letter.addEventListener("click", handleClickLetter); // Add click event to letters
+    });
+
+    // Drop cells
+    const droppableCells = document.querySelectorAll(".grid div.droppable");
+    droppableCells.forEach(cell => {
+        cell.addEventListener("dragover", allowDrop);
+        cell.addEventListener("drop", drop);
+        cell.addEventListener("click", handleClickCell); // Add click event to droppable cells
+        cell.addEventListener("dblclick", handleDoubleClick); // Double-click to clear
+    });
+
+    // Make the first cell (trash bin) draggable
+    const emptyCell = document.querySelector(".delete-cell");
+    emptyCell.setAttribute("draggable", "true");
+    emptyCell.addEventListener("dragstart", drag);
+
+
+    // TextBoxes
+    const textInputs = document.querySelectorAll(".grid div.droppable");
+    textInputs.forEach(tinput => {
+        tinput.addEventListener("input", checkMatch);
+    });
+    
+    fillTextBoxes();
+};
+
+
+function refreshCheckboxes() {
+    speakLettersWhenDropped = document.getElementById("checkSpeakLettersWhenDropped").checked;
+    speakWhenCorrectSolution = document.getElementById("checkSpeakWordsWhenCorrect").checked;
+}
+
 
 function getWordsForGrid(words, numberOfColumns) {
     return words.filter(word => word.length <= numberOfColumns - 2);
@@ -72,22 +101,6 @@ function cleanWord(word) {
         return cleanedWord.replace(new RegExp(`\\${sep}`, 'g'), '');
     }, word).toLowerCase();
 }
-
-
-let speakLettersWhenDropped = true;
-let speakWhenCorrectSolution = true;
-document.getElementById("checkSpeakLettersWhenDropped").checked = speakLettersWhenDropped;
-document.getElementById("checkSpeakWordsWhenCorrect").checked = speakWhenCorrectSolution;
-
-function refreshChecboxes() {
-    speakLettersWhenDropped = document.getElementById("checkSpeakLettersWhenDropped").checked;
-    speakWhenCorrectSolution = document.getElementById("checkSpeakWordsWhenCorrect").checked;
-}
-
-
-numberOfColumns = 7
-const words = getWordsForGrid(Object.keys(wordCounts).map(cleanWord), numberOfColumns);
-document.documentElement.style.setProperty('--number-of-columns', numberOfColumns);
 
 
 function allowDrop(ev) {
@@ -126,8 +139,6 @@ function drop(ev) {
 }
 
 
-let selectedLetter = null; // Variable to store the selected letter element
-
 function handleClickLetter(ev) {
     // Check if a letter is already selected
     if (selectedLetter) {
@@ -142,7 +153,11 @@ function handleClickLetter(ev) {
 function handleClickCell(ev) {
     if (selectedLetter && ev.target.innerHTML === "") { // Only proceed if a letter is selected and the cell is empty
         ev.target.innerHTML = selectedLetter.innerHTML; // Place the selected letter in the cell
+        if (speakLettersWhenDropped) {
+            speak(selectedLetter.innerHTML)
+        }
         selectedLetter.classList.remove("selected"); // Remove selection highlight
+        
         selectedLetter = null; // Reset the selected letter
 
         // Find the input box in the same row and call checkMatch
@@ -154,65 +169,6 @@ function handleClickCell(ev) {
             checkMatch(currentElement); // Call checkMatch on the found input box
         }
     }
-}
-
-// Function to clear the content of a cell on double-click
-function handleDoubleClick(ev) {
-    ev.target.innerHTML = ""; // Clear content on double-click
-
-    // Find the input box in the same row and call checkMatch
-    let currentElement = ev.target;
-    while (currentElement && !currentElement.classList.contains("word-input")) {
-        currentElement = currentElement.nextElementSibling;
-    }
-    if (currentElement && currentElement.classList.contains("word-input")) {
-        checkMatch(currentElement); // Call checkMatch on the found input box
-    }
-}
-
-// Function to check for matches and convert to uppercase
-function checkMatch(input) {
-    input.value = input.value.toUpperCase(); // Convert input to uppercase
-
-    // Get the consonant letter, which is the first sibling in the same row
-    const rowLetter = input.previousElementSibling.textContent;
-
-    // Get all the cells in the same row by traversing backwards from the input
-    let currentElement = input.previousElementSibling;
-    const rowCells = [];
-
-    // Traverse backwards until we reach the consonant letter at the start of the row
-    while (currentElement && !currentElement.classList.contains("letter")) {
-        if (!currentElement.classList.contains("delete-cell")) {
-            rowCells.unshift(currentElement.textContent); // Collect cell content
-        }
-        currentElement = currentElement.previousElementSibling;
-    }
-
-    // Construct the word from the row cells
-    const constructedWord = rowCells.join("");
-
-    // Check if the constructed word matches the input value
-    if (constructedWord === input.value) {
-        input.style.backgroundColor = "lightgreen"; // Light up the input if it matches
-    } else {
-        input.style.backgroundColor = ""; // Remove background color if it doesn't match
-    }
-}
-
-// Function to fill text boxes with random words from the words array
-function fillTextBoxes() {
-    // Get all word-input elements
-    const textInputs = document.querySelectorAll(".word-input");
-    const numberOfWords = Math.min(words.length, textInputs.length);
-    
-    // Shuffle the words array and take the first numberOfWords items
-    const shuffledWords = words.sort(() => 0.5 - Math.random()).slice(0, numberOfWords);
-
-    // Fill the text boxes with the selected words
-    shuffledWords.forEach((word, index) => {
-        textInputs[index].value = word;
-    });
 }
 
 
@@ -239,15 +195,11 @@ function clearAllCells() {
 }
 
 // Function to check for matches and convert to uppercase
-// Function to check for matches and convert to uppercase
 function checkMatch(input) {
     input.value = input.value.toUpperCase(); // Convert input to uppercase
 
-    // Get the consonant letter, which is the first sibling in the same row
-    const rowLetter = input.previousElementSibling.textContent;
-
     // Get all the cells in the same row by traversing backwards from the input
-    let currentElement = input.previousElementSibling;
+    currentElement = input.previousElementSibling;
     const rowCells = [];
 
     // Traverse backwards until we reach the consonant letter at the start of the row
@@ -287,57 +239,8 @@ function fillTextBoxes() {
         textInputs[index].value = word.toUpperCase();
     });
 }
+
 function speak(text, lang = 'english') {
     const utterance = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(utterance);
 }
-
-
-
-// Add event listeners for drag-and-drop interactions
-window.onload = function() {
-
-    // DRAG AND DROP
-    const allCells = document.querySelectorAll(".grid div");
-    allCells.forEach(cell => {
-        cell.addEventListener("dragover", allowDrop);
-        cell.addEventListener("drop", drop);
-        cell.addEventListener("dblclick", handleDoubleClick);
-    });
-
-    // CLICK AND CLICK
-    const letterElements = document.querySelectorAll(".letter");
-    letterElements.forEach(letter => {
-        letter.addEventListener("click", handleClickLetter); // Add click event to letters
-    });
-
-    const droppableCells = document.querySelectorAll(".grid div:not(.letter):not(.delete-cell)");
-    droppableCells.forEach(cell => {
-        cell.addEventListener("click", handleClickCell); // Add click event to droppable cells
-        cell.addEventListener("dblclick", handleDoubleClick); // Double-click to clear
-    });
-
-    // Make the first cell (trash bin) draggable
-    const emptyCell = document.querySelector(".delete-cell");
-    emptyCell.setAttribute("draggable", "true");
-    emptyCell.addEventListener("dragstart", drag);
-    fillTextBoxes();
-};
-
-
-// Add event listeners for click interactions
-window.onload = function() {
-    const letterElements = document.querySelectorAll(".letter");
-    letterElements.forEach(letter => {
-        letter.addEventListener("click", handleClickLetter); // Add click event to letters
-    });
-
-    const droppableCells = document.querySelectorAll(".grid div:not(.letter):not(.delete-cell)");
-    droppableCells.forEach(cell => {
-        cell.addEventListener("click", handleClickCell); // Add click event to droppable cells
-        cell.addEventListener("dblclick", handleDoubleClick); // Double-click to clear
-    });
-
-    fillTextBoxes();
-};
-

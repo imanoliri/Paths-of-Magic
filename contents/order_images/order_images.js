@@ -1,127 +1,69 @@
-// Define the list of image sources
 const imageDir = "../.."
-const imageSources = [
-    "images/image6.jpg",
-    "images/image73.jpg",
-    "images/image28.jpg",
-    "images/image55.jpg",
-    "images/image69.jpg",
-    "images/image16.jpg",
-    "images/image68.jpg",
-    "images/image44.jpg",
-    "images/image80.jpg",
-    "images/image9.jpg",
-    "images/image13.jpg",
-    "images/image67.jpg",
-    "images/image41.jpg",
-    "images/image72.jpg",
-    "images/image83.jpg",
-    "images/image47.jpg",
-    "images/image15.jpg",
-    "images/image32.jpg",
-    "images/image42.jpg",
-    "images/image57.jpg",
-    "images/image45.jpg",
-    "images/image29.jpg",
-    "images/image64.jpg",
-    "images/image60.jpg",
-    "images/image24.jpg",
-    "images/image58.jpg",
-    "images/image82.jpg",
-    "images/image61.jpg",
-    "images/image7.jpg",
-    "images/image18.jpg",
-    "images/image34.jpg",
-    "images/image50.jpg",
-    "images/image75.jpg",
-    "images/image22.jpg",
-    "images/image56.jpg",
-    "images/image1.jpg",
-    "images/image52.jpg",
-    "images/image36.jpg",
-    "images/image23.jpg",
-    "images/image63.jpg",
-    "images/image4.jpg",
-    "images/image76.jpg",
-    "images/image54.jpg",
-    "images/image77.jpg",
-    "images/image3.jpg",
-    "images/image46.jpg",
-    "images/image51.jpg",
-    "images/image12.jpg",
-    "images/image25.jpg",
-    "images/image11.jpg",
-    "images/image38.jpg",
-    "images/image65.jpg",
-    "images/image37.jpg",
-    "images/image40.jpg",
-    "images/image49.jpg",
-    "images/image59.jpg",
-    "images/image26.jpg",
-    "images/image81.jpg",
-    "images/image14.jpg",
-    "images/image66.jpg",
-    "images/image79.jpg",
-    "images/image5.jpg",
-    "images/image27.jpg",
-    "images/image74.jpg",
-    "images/image62.jpg",
-    "images/image20.jpg",
-    "images/image10.jpg",
-    "images/image39.jpg",
-    "images/image71.jpg",
-    "images/image19.jpg",
-    "images/image53.jpg",
-    "images/image17.jpg",
-    "images/image2.jpg",
-    "images/image8.jpg",
-    "images/image35.jpg",
-    "images/image70.jpg",
-    "images/image31.jpg",
-    "images/image48.jpg",
-    "images/image30.jpg",
-    "images/image33.jpg",
-    "images/image21.jpg",
-    "images/image78.jpg",
-    "images/image43.jpg"
-];
 
-const imagesWithIndices = imageSources.map((src, index) => ({ src, index }));
+async function fetchImages() {
+    try {
+        const response = await fetch('./../../interactive_book_images.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        imageSources = await response.json();
+        console.log("Images fetched:", imageSources);
+
+
+    } catch (error) {
+        console.error("Error fetching paragraphs:", error);
+    }
+}
+
+let imageSources
+let imagesWithIndices;
+
+let numImagesSelect;
+let selectedImages;
+let imagesToSelect;
+
+let slider;
+let numImagesLabel;
+
+let circleContainer;
+let popupSolved;
+let popupFailed;
 
 
 
-const slider = document.getElementById('numImagesSlider');
-const numImagesLabel = document.getElementById('numImagesLabel');
 
-numImagesSelect = parseInt(slider.value, 10);
-numImagesLabel.textContent = numImagesSelect;// Initial number of images to display
-
-
-// Update the number of images based on the slider value
-slider.addEventListener('input', () => {
-    numImagesSelect = parseInt(slider.value, 10);
-    numImagesLabel.textContent = numImagesSelect;
-    createAndPositionImages(); // Recreate the images with the new number
+document.addEventListener('DOMContentLoaded', () => {
+    fetchImages().then(createOrder);
 });
 
 
+function createOrder() {
+    imagesWithIndices = imageSources.map((src, index) => ({ src, index }));
+
+    slider = document.getElementById('numImagesSlider');
+    numImagesLabel = document.getElementById('numImagesLabel');
+
+    numImagesSelect = parseInt(slider.value, 10);
+    numImagesLabel.textContent = numImagesSelect;// Initial number of images to display
 
 
-const circleContainer = document.getElementById('circle-container');
-const popupSolved = document.getElementById('popup-solved');
-const popupFailed = document.getElementById('popup-failed');
-
-console.log(JSON.stringify(imageSources));
-
-// Declare variables to share between callbacks
-let selectedImages; // Original set of selected images
-let imagesToSelect; // Images the user needs to select in order
+    // Update the number of images based on the slider value
+    slider.addEventListener('input', () => {
+        numImagesSelect = parseInt(slider.value, 10);
+        numImagesLabel.textContent = numImagesSelect;
+        createAndPositionImages(); // Recreate the images with the new number
+    });
 
 
+    circleContainer = document.getElementById('circle-container');
+    popupSolved = document.getElementById('popup-solved');
+    popupFailed = document.getElementById('popup-failed');
 
-// Initialize the puzzle
-createAndPositionImages();
+    console.log(JSON.stringify(imageSources));
 
+    // Initialize the puzzle
+    createAndPositionImages();
+}
 
 // Function to create and position images in a circular pattern
 function createAndPositionImages() {

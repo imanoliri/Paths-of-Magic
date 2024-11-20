@@ -1,72 +1,39 @@
-// List of words
-const wordCounts = {
-    "magnus": 210,
-    "water": 66,
-    "magic": 60,
-    "rock": 28,
-    "land": 27,
-    "other": 22,
-    "time": 19,
-    "tower": 19,
-    "powerful": 19,
-    "essence": 19,
-    "king": 19,
-    "knew": 19,
-    "path": 18,
-    "mage": 18,
-    "how": 16,
-    "world": 15,
-    "realized": 15,
-    "journey": 14,
-    "way": 13,
-    "too": 13,
-    "saw": 13,
-    "power": 13,
-    "seemed": 13,
-    "eye": 13,
-    "life": 11,
-    "book": 11,
-    "chapter": 10,
-    "day": 10,
-    "long": 10,
-    "grew": 10,
-    "wasnt": 9,
-    "distance": 9,
-    "continue": 9,
-    "see": 9,
-    "far": 8,
-    "magical": 8,
-    "learned": 8,
-    "control": 8,
-    "understood": 8,
-    "small": 7,
-    "came": 7,
-    "became": 7,
-    "village": 6,
-    "different": 6,
-    "decided": 6,
-    "merchant": 6,
-    "however": 6,
-    "clear": 5,
-    "sea": 5,
-    "thought": 5,
-    "felt": 5,
-    "manipulate": 5,
-    "slightly": 5,
-    "left": 5,
-    "returned": 5,
-    "understand": 5,
-    "element": 5,
-    "trap": 5,
-    "view": 5,
-    "always": 5
-};
+async function fetchwWordCount() {
+    try {
+        const response = await fetch('./../../interactive_book_word_count.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        wordCount = await response.json();
+        console.log("Word counts fetched:", wordCount);
+        words = Object.keys(wordCount);
+
+    } catch (error) {
+        console.error("Error fetching word counts:", error);
+    }
+}
+
 
 const charsToIgnore = [" ", ",", "-", "—", ";", ".", "'", "`", "´"];
-const words = Object.keys(wordCounts);
+let wordCount
+let words
 let currentWord = "";
 let anagramWord = "";
 
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchwWordCount().then(createAnagram);
+});
+
+
+function createAnagram() {
+    // Event listeners
+    document.getElementById('guess').addEventListener('input', checkGuess);
+    document.getElementById('next').addEventListener('click', selectNewWord);
+
+    // Initialize the first word
+    selectNewWord();
+}
 
 
 // Function to shuffle letters to create an anagram
@@ -99,9 +66,4 @@ function cleanWord(word) {
     }, word).toLowerCase();
 }
 
-// Event listeners
-document.getElementById('guess').addEventListener('input', checkGuess);
-document.getElementById('next').addEventListener('click', selectNewWord);
 
-// Initialize the first word
-selectNewWord();
